@@ -42,17 +42,17 @@
         (draw len _)))
   (define (draw-leaf t)
     (define radius (+ 2 (* w-scale 16))) ; through trial and error
-    (regular-poly (quotient 360 ang) radius t))
+    (~> t
+        (draw-branch _)           ; give the leaf a stem
+        (regular-poly (quotient 360 ang) radius _))
+    )
   (if (or (= lim depth) (terminate?))
-      (if leaves?
-          (~> t
-              (draw-branch _)
-              (draw-leaf _))
-          t)
+      (if leaves? (draw-leaf t) t)
       (~> t
           (draw-branch _)
           (send-off
-           (λ~> (turn ang _)
+           ;; make the pattern a bit more interesting for angles > 90
+           (λ~> (turn (remainder ang 90) _) 
                 (recurse)))
           (send-off
            (λ~> (turn (- ang) _)
@@ -62,27 +62,26 @@
 (module+ main
   (~> t0 (hex-tree 6 _) turtles-pict))
 
-;;; ---- drawing
 
+;;; draw N trees radially,
+;;; where N = 360 / angle / 2
 (module+ main
-  (let ([hex-tree-instance
+  (let* ([angl 80]
+        [hex-tree-instance
          (λ (t)
            (hex-tree
-            8 t
-            #:angle 60
-            #:start-len 80
-            #:start-w 10
+            6 t
+            #:angle angl
+            #:start-len 100
+            #:start-w 3
             #:scale-len (λ (old) (* old (random-ref '(0.6 1))))
             #:scale-w (λ (old) (* old 0.6))
             #:terminate? (λ () (< 0.9 (random)))
             #:leaves? #t))])
-    (~> t0
-        (send-off
-         (λ~> hex-tree-instance))
-        (send-off
-         (λ~> (turn -120 _)
-              hex-tree-instance))
-        (send-off
-         (λ~> (turn 120 _)
-              hex-tree-instance))
-        turtles-pict)))
+    (~>
+     (for/fold ([acc t0])
+               ([i (in-range (floor (/ 360 angl 2)))])
+       (~> acc
+           (send-off (λ (t) (hex-tree-instance t)))
+           (turn (* 2 angl) _)))
+     turtles-pict)))
