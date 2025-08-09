@@ -5,6 +5,8 @@
          threading
          "turtles.rkt")
 
+(provide hex-tree)
+
 ;;; the size doesn't matter for turtles-pict
 (define t0 (turtles 100 100))
 
