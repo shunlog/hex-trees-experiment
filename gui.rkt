@@ -2,13 +2,16 @@
 
 (require racket/gui/easy
          racket/gui/easy/operator
-         (only-in pict disk)
+         (only-in pict
+                  draw-pict
+                  scale-to-fit)
          "hex-tree.rkt"
          "turtles.rkt"
          graphics/value-turtles
          (only-in threading [~> ~~>])
          racket/random
-         racket/set)
+         racket/set
+         racket/class)
 
 
 (define (get-pict rand-seed angl start-len start-w scale-len-ls)
@@ -69,6 +72,17 @@
 
 (define (rand-seed) (modulo (current-milliseconds) 100000))
 
+(define output-canvas
+  (canvas
+   #:margin '(10 10)
+   #:style '(resize-corner border)
+   @params
+   (λ (dc v)
+     (define-values (w h) (send dc get-size))
+     (define pic (scale-to-fit (apply get-pict v)
+                               w h #:mode 'preserve))
+     (send dc set-smoothing 'smoothed)
+     (draw-pict pic dc 0 0))))
 
 (render
  (window
@@ -84,5 +98,4 @@
     (slider (obs-peek @start-w) #:min-value 1 #:max-value 10
             (λ (v) (@start-w . := . v)))
     (apply hpanel checkboxes))
-   (pict-canvas
-    @params (λ (v) (apply get-pict v))))))
+   output-canvas)))
