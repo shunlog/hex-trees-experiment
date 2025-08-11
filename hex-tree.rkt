@@ -48,7 +48,8 @@
         (draw-branch _)           ; give the leaf a stem
         (regular-poly (quotient 360 ang) radius _))
     )
-  (if (or (= lim depth) (terminate?))
+  (if (or (= lim depth)
+          (and (>= depth 1) (terminate?)))
       (if leaves? (draw-leaf t) t)
       (~> t
           (draw-branch _)
