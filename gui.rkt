@@ -16,6 +16,9 @@
 
 (define (rand-seed) (modulo (current-milliseconds) 100000))
 
+;;; For some reason using 1, 1 gave really choppy lines
+(define t0 (turtles 1000 1000))
+
 (define (get-pict rand-seed depth angl start-w scale-len-ls
                   term-chance leaves? color)
   (random-seed rand-seed)
@@ -33,7 +36,7 @@
        #:terminate? (λ () (< (random) term-chance))
        #:leaves? leaves?)))
   (turtles-pict
-   (for/fold ([acc (set-pen-color (turtles 1 1) color)])
+   (for/fold ([acc (set-pen-color t0 color)])
              ([i (in-range (floor (/ 360 angl 2)))])
      (~~> acc
           (send-off (λ (t) (hex-tree-instance t)))
