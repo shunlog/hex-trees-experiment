@@ -16,7 +16,7 @@
 (define (rand-seed) (modulo (current-milliseconds) 100000))
 
 (define (get-pict rand-seed depth angl start-w scale-len-ls
-                  leaves?)
+                  term-chance leaves?)
   (random-seed rand-seed)
   (when (null? scale-len-ls) (set! scale-len-ls '(0.5)))
   (define hex-tree-instance
@@ -29,7 +29,7 @@
        #:start-w start-w
        #:scale-len (λ (old) (* old (random-ref scale-len-ls)))
        #:scale-w (λ (old) (* old 0.6))
-       #:terminate? (λ () (< 0.9 (random)))
+       #:terminate? (λ () (< (random) term-chance))
        #:leaves? leaves?)))
   (turtles-pict
    (for/fold ([acc (turtles 1 1)])
@@ -39,29 +39,31 @@
           (turn (* 2 angl) _)))))
 
 
-;;; limit callback frequency, especially on slider updates
-(define throttle-ms 100)
 ;;; available length scale factors (from which one is picked at random)
 (define scale-len-ls0 '(0.5 0.7 1.0))
 
 (define @rand-seed (@ 0))
 (define @depth (@ 4))
-(define @th-depth (obs-throttle @depth #:duration throttle-ms))
 (define @angle (@ 60))
-(define @th-angle (obs-throttle @angle #:duration throttle-ms))
 (define @start-w (@ 4))
-(define @th-start-w (obs-throttle @start-w #:duration throttle-ms))
 ;;; set of length scale options
 (define @scale-len (@ (list->set scale-len-ls0)))
-(define @scale-len-ls (obs-map @scale-len set->list))
+(define @term-chance (@ 10))
 (define @leaves? (@ #t))
 
+;;; limit callback frequency, especially on slider updates
+(define throttle-ms 100)
 ;;; The list of observables should match the arguments
 ;;; to (get-pict ...)
 (define @params
   (obs-combine
-   list @rand-seed @th-depth @th-angle
-   @th-start-w @scale-len-ls
+   list @rand-seed
+   (obs-throttle @depth #:duration throttle-ms)
+   (obs-throttle @angle #:duration throttle-ms)
+   (obs-throttle @start-w #:duration throttle-ms)
+   (obs-map @scale-len set->list)
+   (obs-throttle (obs-map @term-chance (λ (v) (/ v 100)))
+                 #:duration throttle-ms)
    @leaves?))
 
 ;;; Checkboxes for scale-len
@@ -108,6 +110,12 @@
      (slider @angle #:min-value 1 #:max-value 120
              (λ (v) (@angle . := . v)))
      (button "+" #:stretch '(#f #f) (λ () (<~ @angle add1))))
+
+    (hpanel
+     (text "Termination chance:")
+     (slider (obs-peek @term-chance)
+             #:min-value 0 #:max-value 100
+             (λ (v) (@term-chance . := . v))))
     
     (hpanel
      (text "Pen width:")
