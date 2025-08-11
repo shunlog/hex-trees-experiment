@@ -15,7 +15,8 @@
 
 (define (rand-seed) (modulo (current-milliseconds) 100000))
 
-(define (get-pict rand-seed depth angl start-w scale-len-ls)
+(define (get-pict rand-seed depth angl start-w scale-len-ls
+                  leaves?)
   (random-seed rand-seed)
   (when (null? scale-len-ls) (set! scale-len-ls '(0.5)))
   (define hex-tree-instance
@@ -29,7 +30,7 @@
        #:scale-len (λ (old) (* old (random-ref scale-len-ls)))
        #:scale-w (λ (old) (* old 0.6))
        #:terminate? (λ () (< 0.9 (random)))
-       #:leaves? #t)))
+       #:leaves? leaves?)))
   (turtles-pict
    (for/fold ([acc (turtles 1 1)])
              ([i (in-range (floor (/ 360 angl 2)))])
@@ -50,17 +51,18 @@
 (define @th-angle (obs-throttle @angle #:duration throttle-ms))
 (define @start-w (@ 4))
 (define @th-start-w (obs-throttle @start-w #:duration throttle-ms))
-
 ;;; set of length scale options
 (define @scale-len (@ (list->set scale-len-ls0)))
 (define @scale-len-ls (obs-map @scale-len set->list))
+(define @leaves? (@ #t))
 
 ;;; The list of observables should match the arguments
 ;;; to (get-pict ...)
 (define @params
   (obs-combine
    list @rand-seed @th-depth @th-angle
-   @th-start-w @scale-len-ls))
+   @th-start-w @scale-len-ls
+   @leaves?))
 
 ;;; Checkboxes for scale-len
 (define checkboxes
@@ -90,14 +92,36 @@
  (window
   #:title "World" #:min-size '(1000 600)
   (hpanel
+   #:alignment '(center top)
    (vpanel
-    #:stretch '(#f #t)
+    #:stretch '(#f #f)
+    #:alignment '(left top)
     (button "Refresh" (λ () (<~ @rand-seed (λ (v) (rand-seed)))))
-    (slider (obs-peek @depth) #:min-value 1 #:max-value 8
-            (λ (v) (@depth . := . v)))
-    (slider (obs-peek @angle) #:min-value 1 #:max-value 120
-            (λ (v) (@angle . := . v)))
-    (slider (obs-peek @start-w) #:min-value 1 #:max-value 10
-            (λ (v) (@start-w . := . v)))
-    (apply hpanel checkboxes))
+    (hpanel
+     (text "Depth:")
+     (slider (obs-peek @depth) #:min-value 1 #:max-value 8
+             (λ (v) (@depth . := . v))))
+
+    (hpanel
+     (text "Angle:")
+     (button "-" #:stretch '(#f #f) (λ () (<~ @angle sub1)))
+     (slider @angle #:min-value 1 #:max-value 120
+             (λ (v) (@angle . := . v)))
+     (button "+" #:stretch '(#f #f) (λ () (<~ @angle add1))))
+    
+    (hpanel
+     (text "Pen width:")
+     (slider (obs-peek @start-w) #:min-value 1 #:max-value 10
+             (λ (v) (@start-w . := . v))))
+    
+    (hpanel
+     (text "Scale options:")
+     (apply hpanel checkboxes))
+    
+    (hpanel
+     (text "Draw leaves:")
+     (checkbox
+      #:checked? @leaves?
+      (λ (bool) (<~ @leaves? (λ (v) bool))))))
+   
    output-canvas)))
