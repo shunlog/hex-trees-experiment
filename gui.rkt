@@ -11,7 +11,8 @@
          (only-in threading [~> ~~>])
          racket/random
          racket/set
-         racket/class)
+         racket/class
+         (only-in racket/draw make-color))
 
 (define (rand-seed) (modulo (current-milliseconds) 100000))
 
@@ -28,7 +29,7 @@
        #:start-len 100 
        #:start-w start-w
        #:scale-len (λ (old) (* old (random-ref scale-len-ls)))
-       #:scale-w (λ (old) (* old 0.6))
+       #:scale-w (λ (old) (* old (expt 0.1 (/ 1 depth))))
        #:terminate? (λ () (< (random) term-chance))
        #:leaves? leaves?)))
   (turtles-pict
@@ -41,6 +42,12 @@
 
 ;;; available length scale factors (from which one is picked at random)
 (define scale-len-ls0 '(0.5 0.7 1.0))
+;;; label, bg-color, pen-color
+(define color-choices
+  `(("white" "white" "black")
+    ("purple" ,(make-color 76 0 76) ,(make-color 242 229 242))
+    ("cyan"  ,(make-color 0 83 83)  ,(make-color 178 220 220))
+    ("negative" "black" "white")))
 
 (define @rand-seed (@ 0))
 (define @depth (@ 4))
@@ -50,8 +57,10 @@
 (define @scale-len (@ (list->set scale-len-ls0)))
 (define @term-chance (@ 10))
 (define @leaves? (@ #t))
-(define @color-pen (@ "white"))
-(define @color-bg (@ "black"))
+(define @color-pen (@ (caddr (car color-choices))))
+(define @color-bg (@ (cadr (car color-choices))))
+
+
 
 ;;; limit callback frequency, especially on slider updates
 (define throttle-ms 100)
@@ -138,6 +147,13 @@
      (text "Draw leaves:")
      (checkbox
       #:checked? @leaves?
-      (λ (bool) (<~ @leaves? (λ (v) bool))))))
+      (λ (bool) (<~ @leaves? (λ (v) bool)))))
+
+    ;; label, bg-color, pen-color
+    (choice color-choices
+            #:choice->label car
+            (λ (ls)
+              (:= @color-bg (cadr ls))
+              (:= @color-pen (caddr ls)))))
    
    output-canvas)))
