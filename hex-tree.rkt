@@ -68,22 +68,24 @@
 ;;; draw N trees radially,
 ;;; where N = 360 / angle / 2
 (module+ main
-  (let* ([angl 80]
-        [hex-tree-instance
-         (λ (t)
-           (hex-tree
-            6 t
-            #:angle angl
-            #:start-len 100
-            #:start-w 3
-            #:scale-len (λ (old) (* old (random-ref '(0.6 1))))
-            #:scale-w (λ (old) (* old 0.6))
-            #:terminate? (λ () (< 0.9 (random)))
-            #:leaves? #t))])
-    (~>
-     (for/fold ([acc t0])
-               ([i (in-range (floor (/ 360 angl 2)))])
-       (~> acc
-           (send-off (λ (t) (hex-tree-instance t)))
-           (turn (* 2 angl) _)))
-     turtles-pict)))
+  (define p
+    (let* ([angl 80]
+          [hex-tree-instance
+           (λ (t)
+             (hex-tree
+              6 t
+              #:angle angl
+              #:start-len 100
+              #:start-w 3
+              #:scale-len (λ (old) (* old (random-ref '(0.6 1))))
+              #:scale-w (λ (old) (* old 0.6))
+              #:terminate? (λ () (< 0.9 (random)))
+              #:leaves? #t))])
+     (~>
+      (for/fold ([acc t0])
+                ([i (in-range (floor (/ 360 angl 2)))])
+        (~> acc
+            (send-off (λ (t) (hex-tree-instance t)))
+            (turn (* 2 angl) _)))
+      turtles-pict)))
+  p)

@@ -16,7 +16,7 @@
 (define (rand-seed) (modulo (current-milliseconds) 100000))
 
 (define (get-pict rand-seed depth angl start-w scale-len-ls
-                  term-chance leaves?)
+                  term-chance leaves? color)
   (random-seed rand-seed)
   (when (null? scale-len-ls) (set! scale-len-ls '(0.5)))
   (define hex-tree-instance
@@ -32,7 +32,7 @@
        #:terminate? (λ () (< (random) term-chance))
        #:leaves? leaves?)))
   (turtles-pict
-   (for/fold ([acc (turtles 1 1)])
+   (for/fold ([acc (set-pen-color (turtles 1 1) color)])
              ([i (in-range (floor (/ 360 angl 2)))])
      (~~> acc
           (send-off (λ (t) (hex-tree-instance t)))
@@ -50,21 +50,26 @@
 (define @scale-len (@ (list->set scale-len-ls0)))
 (define @term-chance (@ 10))
 (define @leaves? (@ #t))
+(define @color-pen (@ "white"))
+(define @color-bg (@ "black"))
 
 ;;; limit callback frequency, especially on slider updates
 (define throttle-ms 100)
-;;; The list of observables should match the arguments
+;;; The list of observables must match the arguments
 ;;; to (get-pict ...)
 (define @params
   (obs-combine
-   list @rand-seed
+   list
+   @color-bg                            ; must be first
+   @rand-seed
    (obs-throttle @depth #:duration throttle-ms)
    (obs-throttle @angle #:duration throttle-ms)
    (obs-throttle @start-w #:duration throttle-ms)
    (obs-map @scale-len set->list)
    (obs-throttle (obs-map @term-chance (λ (v) (/ v 100)))
                  #:duration throttle-ms)
-   @leaves?))
+   @leaves?
+   @color-pen))
 
 ;;; Checkboxes for scale-len
 (define checkboxes
@@ -84,9 +89,12 @@
    #:style '(resize-corner border)
    @params
    (λ (dc v)
+     (define-values (col-bg args) (values (car v) (cdr v)))
      (define-values (w h) (send dc get-size))
-     (define pic (scale-to-fit (apply get-pict v)
+     (define pic (scale-to-fit (apply get-pict args)
                                w h #:mode 'preserve))
+     (send dc set-background col-bg)
+     (send dc clear)
      (send dc set-smoothing 'smoothed)
      (draw-pict pic dc 0 0))))
 
