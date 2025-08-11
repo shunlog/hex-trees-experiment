@@ -13,16 +13,18 @@
          racket/set
          racket/class)
 
+(define (rand-seed) (modulo (current-milliseconds) 100000))
 
-(define (get-pict rand-seed angl start-len start-w scale-len-ls)
+(define (get-pict rand-seed depth angl start-w scale-len-ls)
   (random-seed rand-seed)
   (when (null? scale-len-ls) (set! scale-len-ls '(0.5)))
   (define hex-tree-instance
     (λ (t)
       (hex-tree
-       6 t
+       depth t
        #:angle angl
-       #:start-len start-len
+       ;; no need to change this since the output is scaled to fit
+       #:start-len 100 
        #:start-w start-w
        #:scale-len (λ (old) (* old (random-ref scale-len-ls)))
        #:scale-w (λ (old) (* old 0.6))
@@ -36,26 +38,28 @@
           (turn (* 2 angl) _)))))
 
 
+;;; limit callback frequency, especially on slider updates
 (define throttle-ms 100)
 ;;; available length scale factors (from which one is picked at random)
 (define scale-len-ls0 '(0.5 0.7 1.0))
 
 (define @rand-seed (@ 0))
+(define @depth (@ 4))
+(define @th-depth (obs-throttle @depth #:duration throttle-ms))
 (define @angle (@ 60))
 (define @th-angle (obs-throttle @angle #:duration throttle-ms))
-(define @start-len (@ 100))
-(define @th-start-len (obs-throttle @start-len #:duration throttle-ms))
 (define @start-w (@ 4))
 (define @th-start-w (obs-throttle @start-w #:duration throttle-ms))
-(define @scale-len (@ (list->set scale-len-ls0)))
 
+;;; set of length scale options
+(define @scale-len (@ (list->set scale-len-ls0)))
 (define @scale-len-ls (obs-map @scale-len set->list))
 
 ;;; The list of observables should match the arguments
 ;;; to (get-pict ...)
 (define @params
   (obs-combine
-   list @rand-seed @th-angle @th-start-len
+   list @rand-seed @th-depth @th-angle
    @th-start-w @scale-len-ls))
 
 ;;; Checkboxes for scale-len
@@ -69,8 +73,6 @@
                 (λ (s) (if bool
                            (set-add s v)
                            (set-remove s v))))))))
-
-(define (rand-seed) (modulo (current-milliseconds) 100000))
 
 (define output-canvas
   (canvas
@@ -91,10 +93,10 @@
    (vpanel
     #:stretch '(#f #t)
     (button "Refresh" (λ () (<~ @rand-seed (λ (v) (rand-seed)))))
+    (slider (obs-peek @depth) #:min-value 1 #:max-value 8
+            (λ (v) (@depth . := . v)))
     (slider (obs-peek @angle) #:min-value 1 #:max-value 120
             (λ (v) (@angle . := . v)))
-    (slider (obs-peek @start-len) #:min-value 10 #:max-value 400
-            (λ (v) (@start-len . := . v)))
     (slider (obs-peek @start-w) #:min-value 1 #:max-value 10
             (λ (v) (@start-w . := . v)))
     (apply hpanel checkboxes))
