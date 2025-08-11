@@ -42,6 +42,7 @@
 
 ;;; available length scale factors (from which one is picked at random)
 (define scale-len-ls0 '(0.5 0.7 1.0))
+(define scale-len-ls1 '(0.5 1.0))   ; enabled values
 ;;; label, bg-color, pen-color
 (define color-choices
   `(("white" "white" "black")
@@ -49,13 +50,13 @@
     ("cyan"  ,(make-color 0 83 83)  ,(make-color 178 220 220))
     ("negative" "black" "white")))
 
-(define @rand-seed (@ 0))
-(define @depth (@ 4))
+(define @rand-seed (@ 4))
+(define @depth (@ 8))
 (define @angle (@ 60))
-(define @start-w (@ 4))
+(define @start-w (@ 8))
 ;;; set of length scale options
-(define @scale-len (@ (list->set scale-len-ls0)))
-(define @term-chance (@ 10))
+(define @scale-len (@ (list->set scale-len-ls1)))
+(define @term-chance (@ 15))
 (define @leaves? (@ #f))
 (define @color-pen (@ (caddr (car color-choices))))
 (define @color-bg (@ (cadr (car color-choices))))
