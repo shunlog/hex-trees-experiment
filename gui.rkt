@@ -56,7 +56,7 @@
 ;;; set of length scale options
 (define @scale-len (@ (list->set scale-len-ls0)))
 (define @term-chance (@ 10))
-(define @leaves? (@ #t))
+(define @leaves? (@ #f))
 (define @color-pen (@ (caddr (car color-choices))))
 (define @color-bg (@ (cadr (car color-choices))))
 
@@ -150,10 +150,12 @@
       (λ (bool) (<~ @leaves? (λ (v) bool)))))
 
     ;; label, bg-color, pen-color
-    (choice color-choices
-            #:choice->label car
-            (λ (ls)
-              (:= @color-bg (cadr ls))
-              (:= @color-pen (caddr ls)))))
+    (hpanel
+     (text "Colorscheme:")
+     (choice color-choices
+             #:choice->label car
+             (λ (ls)
+               (:= @color-bg (cadr ls))
+               (:= @color-pen (caddr ls))))))
    
    output-canvas)))
