@@ -55,7 +55,7 @@
           (draw-branch _)
           (send-off
            ;; make the pattern a bit more interesting for angles > 90
-           (λ~> (turn (remainder ang 90) _) 
+           (λ~> (turn (remainder ang 91) _) 
                 (recurse)))
           (send-off
            (λ~> (turn (- ang) _)
@@ -90,3 +90,25 @@
             (turn (* 2 angl) _)))
       turtles-pict)))
   p)
+
+
+(module+ main
+  (let* ([angl 90]
+          [hex-tree-instance
+           (λ (t)
+             (hex-tree
+              6 t
+              #:angle angl
+              #:start-len 300
+              #:start-w 3
+              #:scale-len (λ (old) (* old (random-ref '(0.5))))
+              #:scale-w (λ (old) (* old 0.6))
+              #:terminate? (λ () (< 0.95 (random)))
+              #:leaves? #f))])
+     (~>
+      (for/fold ([acc t0])
+                ([i (in-range (floor (/ 360 angl 2)))])
+        (~> acc
+            (send-off (λ (t) (hex-tree-instance t)))
+            (turn (* 2 angl) _)))
+      turtles-pict)))
