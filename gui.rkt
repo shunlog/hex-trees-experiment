@@ -133,7 +133,8 @@
    (vpanel
     #:stretch '(#f #f)
     #:alignment '(left top)
-    (button "Refresh" (λ () (<~ @rand-seed (λ (v) (rand-seed)))))
+    (button "Random seed"
+            (λ () (<~ @rand-seed (λ (v) (rand-seed)))))
     (hpanel
      (text "Depth:")
      (slider @depth #:min-value 1 #:max-value 8
