@@ -17,10 +17,12 @@
 (define (rand-seed) (modulo (current-milliseconds) 100000))
 
 ;;; For some reason using 1, 1 gave really choppy lines
-(define t0 (turtles 1000 1000))
+;;; start upwards like a real tree
+(define t0 (turn 90 (turtles 1000 1000)))
 
 (define (get-pict rand-seed depth angl start-w scale-len-ls
-                  term-chance leaves? color)
+                  term-chance leaves? color
+                  n-roots n-roots-auto)
   (random-seed rand-seed)
   (when (null? scale-len-ls) (set! scale-len-ls '(0.5)))
   (define hex-tree-instance
@@ -35,9 +37,12 @@
        #:scale-w (λ (old) (* old (expt 0.1 (/ 1 depth))))
        #:terminate? (λ () (< (random) term-chance))
        #:leaves? leaves?)))
+  (define n-roots1
+    (if (not n-roots-auto) n-roots
+        (in-range (floor (/ 360 angl 2)))))
   (turtles-pict
    (for/fold ([acc (set-pen-color t0 color)])
-             ([i (in-range (floor (/ 360 angl 2)))])
+             ([i n-roots1])
      (~~> acc
           (send-off (λ (t) (hex-tree-instance t)))
           (turn (* 2 angl) _)))))
@@ -64,7 +69,9 @@
 (define @leaves? (@ #f))
 (define @color-pen (@ (caddr (car color-choices))))
 (define @color-bg (@ (cadr (car color-choices))))
-
+;;; number of roots
+(define @n-roots (@ 1))
+(define @n-roots-auto (@ #f))
 
 
 ;;; limit callback frequency, especially on slider updates
@@ -85,7 +92,9 @@
    (obs-throttle (obs-map @term-chance (λ (v) (/ v 100)))
                  #:duration throttle-ms)
    @leaves?
-   @color-pen))
+   @color-pen
+   @n-roots
+   @n-roots-auto))
 
 ;;; Checkboxes for scale-len
 (define checkboxes
@@ -134,6 +143,15 @@
      (slider @angle #:min-value 1 #:max-value 120
              (λ (v) (@angle . := . v)))
      (button "+" #:stretch '(#f #f) (λ () (<~ @angle add1))))
+
+    (hpanel
+     (text "Number of roots:")
+     (slider @n-roots #:enabled? (obs-map @n-roots-auto not)
+             #:min-value 1 #:max-value 12
+             (λ (v) (:= @n-roots v)))
+     (checkbox #:checked? @n-roots-auto
+               #:label "Auto"
+               (λ (bool) (:= @n-roots-auto bool))))
 
     (hpanel
      (text "Termination chance:")
