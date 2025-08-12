@@ -171,16 +171,15 @@
 
     (hpanel
      (text "Scale options:")
-     (apply hpanel
-            (input (number->string (obs-peek @scale-len-custom))
-                   #:stretch '(#f #f)
-                   (λ (evtype v)
-                     (if (eq? evtype 'return)
-                         (:= @scale-len-custom
-                             (string->number v))
-                         #f)))
-            checkboxes))
-   
+     (input (number->string (obs-peek @scale-len-custom))
+            #:stretch '(#f #f)
+            (λ (evtype v)
+              (if (eq? evtype 'return)
+                  (:= @scale-len-custom
+                      (string->number v))
+                  #f)))
+     (apply hpanel checkboxes))
+    
     (hpanel
      (text "Draw leaves:")
      (checkbox
