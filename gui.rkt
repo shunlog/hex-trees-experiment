@@ -4,7 +4,8 @@
          racket/gui/easy/operator
          (only-in pict
                   draw-pict
-                  scale-to-fit)
+                  scale-to-fit
+                  inset)
          "hex-tree.rkt"
          "turtles.rkt"
          graphics/value-turtles
@@ -116,8 +117,9 @@
    (λ (dc v)
      (define-values (col-bg args) (values (car v) (cdr v)))
      (define-values (w h) (send dc get-size))
-     (define pic (scale-to-fit (apply get-pict args)
-                               w h #:mode 'preserve))
+     (define pic (~~> (apply get-pict args)
+                      (inset 15)
+                      (scale-to-fit w h #:mode 'preserve)))
      (send dc set-background col-bg)
      (send dc clear)
      (send dc set-smoothing 'smoothed)
