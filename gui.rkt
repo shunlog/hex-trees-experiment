@@ -75,7 +75,8 @@
 
 
 ;;; limit callback frequency, especially on slider updates
-(define throttle-ms 100)
+;;; TODO: throtlle makes the sliders buggy on Macos
+(define throttle-ms 10)
 ;;; The list of observables must match the arguments
 ;;; to (get-pict ...)
 (define @params
@@ -83,14 +84,13 @@
    list
    @color-bg                            ; must be first
    @rand-seed
-   (obs-throttle @depth #:duration throttle-ms)
-   (obs-throttle @angle #:duration throttle-ms)
-   (obs-throttle @start-w #:duration throttle-ms)
+   @depth
+   @angle
+   @start-w
    (obs-combine cons
                 @scale-len-custom
                 (obs-map @scale-len-ls set->list))
-   (obs-throttle (obs-map @term-chance (λ (v) (/ v 100)))
-                 #:duration throttle-ms)
+   (obs-map @term-chance (λ (v) (/ v 100)))
    @leaves?
    @color-pen
    @n-roots
@@ -134,7 +134,7 @@
     (button "Refresh" (λ () (<~ @rand-seed (λ (v) (rand-seed)))))
     (hpanel
      (text "Depth:")
-     (slider (obs-peek @depth) #:min-value 1 #:max-value 8
+     (slider @depth #:min-value 1 #:max-value 8
              (λ (v) (@depth . := . v))))
 
     (hpanel
@@ -155,14 +155,17 @@
 
     (hpanel
      (text "Termination chance:")
-     (slider (obs-peek @term-chance)
+     (text (obs-map @term-chance
+                    (λ (n) (~~> n number->string
+                                (string-append "%")))))
+     (slider @term-chance
              #:min-value 0 #:max-value 100
-             (λ (v) (@term-chance . := . v))))
+             (λ (v) (:= @term-chance v))))
 
     (hpanel
      (text "Pen width:")
-     (slider (obs-peek @start-w) #:min-value 1 #:max-value 10
-             (λ (v) (@start-w . := . v))))
+     (slider @start-w #:min-value 1 #:max-value 10
+             (λ (v) (:= @start-w v))))
 
     (hpanel
      (text "Scale options:")
