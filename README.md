@@ -9,3 +9,5 @@ Watch a [demo on youtube](https://youtu.be/pBRktdJCIPo).
 ![](./demo.png)
 
 Took inspiration from [this blog post](https://www.leonrische.me/pages/generative_art_with_cfgs.html).
+
+To run it, install the dependencies with `raco pkg install` and then run `racket gui.rkt`.
