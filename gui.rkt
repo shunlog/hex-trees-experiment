@@ -102,7 +102,7 @@
   (for/list ([v scale-len-ls0])
     (checkbox
      #:label (number->string v)
-     #:checked? #t
+     #:checked? (not (not (member v scale-len-ls1)))
      (λ (bool) (<~
                 @scale-len-ls
                 (λ (s) (if bool
