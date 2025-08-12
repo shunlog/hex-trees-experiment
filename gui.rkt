@@ -58,7 +58,8 @@
 (define @angle (@ 60))
 (define @start-w (@ 8))
 ;;; set of length scale options
-(define @scale-len (@ (list->set scale-len-ls1)))
+(define @scale-len-ls (@ (list->set scale-len-ls1)))
+(define @scale-len-custom (@ 0.85))
 (define @term-chance (@ 15))
 (define @leaves? (@ #f))
 (define @color-pen (@ (caddr (car color-choices))))
@@ -78,7 +79,9 @@
    (obs-throttle @depth #:duration throttle-ms)
    (obs-throttle @angle #:duration throttle-ms)
    (obs-throttle @start-w #:duration throttle-ms)
-   (obs-map @scale-len set->list)
+   (obs-combine cons
+                @scale-len-custom
+                (obs-map @scale-len-ls set->list))
    (obs-throttle (obs-map @term-chance (λ (v) (/ v 100)))
                  #:duration throttle-ms)
    @leaves?
@@ -91,7 +94,7 @@
      #:label (number->string v)
      #:checked? #t
      (λ (bool) (<~
-                @scale-len
+                @scale-len-ls
                 (λ (s) (if bool
                            (set-add s v)
                            (set-remove s v))))))))
@@ -137,16 +140,24 @@
      (slider (obs-peek @term-chance)
              #:min-value 0 #:max-value 100
              (λ (v) (@term-chance . := . v))))
-    
+
     (hpanel
      (text "Pen width:")
      (slider (obs-peek @start-w) #:min-value 1 #:max-value 10
              (λ (v) (@start-w . := . v))))
-    
+
     (hpanel
      (text "Scale options:")
-     (apply hpanel checkboxes))
-    
+     (apply hpanel
+            (input (number->string (obs-peek @scale-len-custom))
+                   #:stretch '(#f #f)
+                   (λ (evtype v)
+                     (if (eq? evtype 'return)
+                         (:= @scale-len-custom
+                             (string->number v))
+                         #f)))
+            checkboxes))
+   
     (hpanel
      (text "Draw leaves:")
      (checkbox
